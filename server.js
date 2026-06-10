@@ -4,22 +4,12 @@ const { Client, GatewayIntentBits, Events } = require("discord.js");
 
 const app = express();
 
-// ==============================
-// 환경변수 설정
-// Railway 환경변수에서 읽어옴
-// ==============================
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN || "";
-const ADMIN_DISCORD_ID = process.env.ADMIN_DISCORD_ID || ""; // 명령어 허용할 디스코드 유저 ID
+const ADMIN_DISCORD_ID = process.env.ADMIN_DISCORD_ID || "";
 
-// ==============================
-// 현재 게시글 상태
-// ==============================
 let currentStation = "";
 let currentPost = "";
 
-// ==============================
-// 멤버 목록
-// ==============================
 const MEMBERS = [
   "fishstory",
   "sircharlee",
@@ -34,9 +24,6 @@ const MEMBERS = [
   "hwyjump"
 ];
 
-// ==============================
-// SOOP URL 파싱
-// ==============================
 function parseSoopUrl(url) {
   if (!url) return null;
   url = url.trim();
@@ -47,9 +34,6 @@ function parseSoopUrl(url) {
   return { stationId: match[1], postId: match[2] };
 }
 
-// ==============================
-// 댓글 수집
-// ==============================
 async function fetchComments(stationId, postId) {
   let all = [];
   let page = 1;
@@ -79,14 +63,11 @@ async function fetchComments(stationId, postId) {
   return all;
 }
 
-// ==============================
-// Express API
-// ==============================
 app.get("/api/rank", async (req, res) => {
   if (!currentStation || !currentPost) {
     return res.json({
       updatedAt: new Date().toLocaleString(),
-      error: "게시글이 설정되지 않았습니다. 디스코드에서 !setpost 명령어로 설정해주세요.",
+      error: "게시글이 설정되지 않았습니다. 디스코드에서 !설정 명령어로 설정해주세요.",
       ranks: []
     });
   }
@@ -123,7 +104,6 @@ app.get("/api/rank", async (req, res) => {
   }
 });
 
-// 서버 살아있는지 확인용 (UptimeRobot이 여기로 핑 보냄)
 app.get("/ping", (req, res) => {
   res.json({ status: "ok", currentStation, currentPost });
 });
@@ -150,53 +130,67 @@ if (!DISCORD_TOKEN) {
     console.log(`디스코드 봇 로그인: ${client.user.tag}`);
   });
 
-  client.on(Events.MessageCreate, async (message) => {
-    // 봇 자신의 메시지 무시
-    if (message.author.bot) return;
+  // 명령어 접두사 목록
+  const SET_CMDS = ["!setpost", "!설정", "!주소"];
+  const STATUS_CMDS = ["!status", "!현황"];
+  const HELP_CMDS = ["!help", "!도움", "!명령어"];
 
-    // 관리자 ID가 설정된 경우 해당 유저만 허용
+  function getCurrentUrl() {
+    if (!currentStation || !currentPost) return null;
+    return `https://www.sooplive.com/station/${currentStation}/post/${currentPost}`;
+  }
+
+  client.on(Events.MessageCreate, async (message) => {
+    if (message.author.bot) return;
     if (ADMIN_DISCORD_ID && message.author.id !== ADMIN_DISCORD_ID) return;
 
     const content = message.content.trim();
 
-    // !setpost [URL]
-    if (content.startsWith("!setpost")) {
-      const url = content.replace("!setpost", "").trim();
-      const parsed = parseSoopUrl(url);
+    // !설정 / !주소 / !setpost [URL] — URL 없으면 현재 주소 표시
+    const setCmd = SET_CMDS.find(cmd => content.startsWith(cmd));
+    if (setCmd) {
+      const url = content.replace(setCmd, "").trim();
 
+      // URL 없으면 현재 주소 표시
+      if (!url) {
+        const current = getCurrentUrl();
+        if (!current) return message.reply("현재 설정된 게시글이 없습니다.");
+        return message.reply(`현재 주소: ${current}`);
+      }
+
+      const parsed = parseSoopUrl(url);
       if (!parsed) {
         return message.reply(
-          "❌ SOOP 게시글 URL 형식이 아닙니다.\n예: `!setpost https://www.sooplive.com/station/아이디/post/글번호`"
+          "❌ SOOP 게시글 URL 형식이 아닙니다.\n예: `!설정 https://www.sooplive.com/station/아이디/post/글번호`"
         );
       }
 
       currentStation = parsed.stationId;
       currentPost = parsed.postId;
-
       console.log(`게시글 변경: station=${currentStation}, post=${currentPost}`);
 
       return message.reply(
-        `✅ 게시글이 설정되었습니다.\n- 채널: \`${currentStation}\`\n- 글번호: \`${currentPost}\``
+        `✅ 게시글이 설정되었습니다.\n- 채널: \`${currentStation}\`\n- 글번호: \`${currentPost}\`\n- URL: ${getCurrentUrl()}`
       );
     }
 
-    // !status — 현재 설정 확인
-    if (content === "!status") {
-      if (!currentStation || !currentPost) {
-        return message.reply("현재 설정된 게시글이 없습니다.");
-      }
+    // !현황 / !status
+    if (STATUS_CMDS.includes(content)) {
+      const current = getCurrentUrl();
+      if (!current) return message.reply("현재 설정된 게시글이 없습니다.");
       return message.reply(
-        `현재 설정:\n- 채널: \`${currentStation}\`\n- 글번호: \`${currentPost}\`\n- URL: https://www.sooplive.com/station/${currentStation}/post/${currentPost}`
+        `현재 설정:\n- 채널: \`${currentStation}\`\n- 글번호: \`${currentPost}\`\n- URL: ${current}`
       );
     }
 
-    // !help
-    if (content === "!help") {
+    // !도움 / !명령어 / !help
+    if (HELP_CMDS.includes(content)) {
       return message.reply(
         "**순위봇 명령어**\n" +
-        "`!setpost [URL]` - 순위 집계할 SOOP 게시글 설정\n" +
-        "`!status` - 현재 설정된 게시글 확인\n" +
-        "`!help` - 명령어 목록"
+        "`!설정 [URL]` / `!주소 [URL]` / `!setpost [URL]` - 게시글 설정\n" +
+        "`!설정` / `!주소` (URL 없이) - 현재 주소 확인\n" +
+        "`!현황` / `!status` - 현재 설정 상세 확인\n" +
+        "`!도움` / `!명령어` / `!help` - 명령어 목록"
       );
     }
   });
