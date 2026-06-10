@@ -84,7 +84,8 @@ app.get("/api/rank", async (req, res) => {
       !top30.find(t => t.userId === c.userId)
     );
 
-    const merged = [...top30, ...memberComments];
+    const merged = [...top30, ...memberComments]
+      .sort((a, b) => (b.likeCnt || 0) - (a.likeCnt || 0));
 
     const ranks = merged.map((c, index) => ({
       rank: index + 1,
