@@ -83,15 +83,16 @@ app.get("/api/rank", async (req, res) => {
       rankMap[c.userId] = index + 1;
     });
 
-    const top30 = allSorted.slice(0, 30);
+    // 최대 1000명까지 (데이터가 1000명 미만이면 있는 만큼만)
+    const top1000 = allSorted.slice(0, 1000);
 
-    // 멤버 중 top30에 없는 사람 추가
+    // 멤버 중 top1000에 없는 사람 추가
     const memberComments = allSorted.filter(c =>
       MEMBERS.includes(c.userId || "") &&
-      !top30.find(t => t.userId === c.userId)
+      !top1000.find(t => t.userId === c.userId)
     );
 
-    const merged = [...top30, ...memberComments];
+    const merged = [...top1000, ...memberComments];
 
     const ranks = merged.map(c => ({
       rank: rankMap[c.userId] || 0,
