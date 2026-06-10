@@ -76,26 +76,17 @@ app.get("/api/rank", async (req, res) => {
     const comments = await fetchComments(currentStation, currentPost);
 
     const top30 = comments
-        .sort((a, b) => (b.likeCnt || 0) - (a.likeCnt || 0))
-        .slice(0, 30);
+      .sort((a, b) => (b.likeCnt || 0) - (a.likeCnt || 0))
+      .slice(0, 30);
 
-// 멤버 중 top30에 없는 사람 추가
-    const memberComments = comments.filter(c => 
-        MEMBERS.includes(c.userId || "") && 
-        !top30.find(t => t.userId === c.userId)
+    const memberComments = comments.filter(c =>
+      MEMBERS.includes(c.userId || "") &&
+      !top30.find(t => t.userId === c.userId)
     );
 
     const merged = [...top30, ...memberComments];
 
-    const ranks = merged.map((c, index) => ({  
-        rank: index + 1,
-        name: c.userNick || "",
-        id: c.userId || "",
-        up: c.likeCnt || 0,
-        member: MEMBERS.includes(c.userId || "")
-    }));
-
-    const ranks = sorted.map((c, index) => ({
+    const ranks = merged.map((c, index) => ({
       rank: index + 1,
       name: c.userNick || "",
       id: c.userId || "",
@@ -157,7 +148,6 @@ if (!DISCORD_TOKEN) {
 
     const content = message.content.trim();
 
-    // !주소 [URL] 또는 !주소 (URL 없이)
     if (content.startsWith("!주소")) {
       const url = content.replace("!주소", "").trim();
 
@@ -183,7 +173,6 @@ if (!DISCORD_TOKEN) {
       );
     }
 
-    // !도움 / !명령어
     if (content === "!도움" || content === "!명령어") {
       return message.reply(
         "**순위봇 명령어**\n" +
