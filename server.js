@@ -75,9 +75,25 @@ app.get("/api/rank", async (req, res) => {
   try {
     const comments = await fetchComments(currentStation, currentPost);
 
-    const sorted = comments
-      .sort((a, b) => (b.likeCnt || 0) - (a.likeCnt || 0))
-      .slice(0, 30);
+    const top30 = comments
+        .sort((a, b) => (b.likeCnt || 0) - (a.likeCnt || 0))
+        .slice(0, 30);
+
+// 멤버 중 top30에 없는 사람 추가
+    const memberComments = comments.filter(c => 
+        MEMBERS.includes(c.userId || "") && 
+        !top30.find(t => t.userId === c.userId)
+    );
+
+    const merged = [...top30, ...memberComments];
+
+    const ranks = merged.map((c, index) => ({  
+        rank: index + 1,
+        name: c.userNick || "",
+        id: c.userId || "",
+        up: c.likeCnt || 0,
+        member: MEMBERS.includes(c.userId || "")
+    }));
 
     const ranks = sorted.map((c, index) => ({
       rank: index + 1,
