@@ -66,7 +66,7 @@ async function fetchComments(stationId, postId) {
 app.get("/api/rank", async (req, res) => {
   if (!currentStation || !currentPost) {
     return res.json({
-      updatedAt: new Date().toLocaleString(),
+      updatedAt: "",
       error: "게시글이 설정되지 않았습니다. 디스코드에서 !주소 명령어로 설정해주세요.",
       ranks: []
     });
@@ -75,27 +75,37 @@ app.get("/api/rank", async (req, res) => {
   try {
     const comments = await fetchComments(currentStation, currentPost);
 
-    const top30 = comments
-      .sort((a, b) => (b.likeCnt || 0) - (a.likeCnt || 0))
-      .slice(0, 30);
+    // 전체 정렬 후 순위 map 생성
+    const allSorted = [...comments].sort((a, b) => (b.likeCnt || 0) - (a.likeCnt || 0));
 
-    const memberComments = comments.filter(c =>
+    const rankMap = {};
+    allSorted.forEach((c, index) => {
+      rankMap[c.userId] = index + 1;
+    });
+
+    const top30 = allSorted.slice(0, 30);
+
+    // 멤버 중 top30에 없는 사람 추가
+    const memberComments = allSorted.filter(c =>
       MEMBERS.includes(c.userId || "") &&
       !top30.find(t => t.userId === c.userId)
     );
 
     const merged = [...top30, ...memberComments];
 
-    const ranks = merged.map((c, index) => ({
-      rank: index + 1,
+    const ranks = merged.map(c => ({
+      rank: rankMap[c.userId] || 0,
       name: c.userNick || "",
       id: c.userId || "",
       up: c.likeCnt || 0,
       member: MEMBERS.includes(c.userId || "")
-    }));
+    })).sort((a, b) => a.rank - b.rank);
+
+    const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const updatedAt = `${now.getUTCFullYear()}-${String(now.getUTCMonth()+1).padStart(2,'0')}-${String(now.getUTCDate()).padStart(2,'0')} ${String(now.getUTCHours()).padStart(2,'0')}:${String(now.getUTCMinutes()).padStart(2,'0')}:${String(now.getUTCSeconds()).padStart(2,'0')}`;
 
     res.json({
-      updatedAt: new Date().toLocaleString(),
+      updatedAt,
       stationId: currentStation,
       postId: currentPost,
       total: ranks.length,
@@ -104,7 +114,7 @@ app.get("/api/rank", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({
-      updatedAt: new Date().toLocaleString(),
+      updatedAt: "",
       error: err.message,
       ranks: []
     });
