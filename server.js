@@ -84,28 +84,23 @@ app.get("/api/rank", async (req, res) => {
       !top30.find(t => t.userId === c.userId)
     );
 
-    const merged = [...top30, ...memberComments]
-  .sort((a, b) => (b.likeCnt || 0) - (a.likeCnt || 0));
+    const merged = [...top30, ...memberComments];
 
-const ranks = merged.map((c, index) => ({
-  rank: index + 1,
-  name: c.userNick || "",
-  id: c.userId || "",
-  up: c.likeCnt || 0,
-  member: MEMBERS.includes(c.userId || "")
-}));
+    const ranks = merged.map((c, index) => ({
+      rank: index + 1,
+      name: c.userNick || "",
+      id: c.userId || "",
+      up: c.likeCnt || 0,
+      member: MEMBERS.includes(c.userId || "")
+    }));
 
-const now = new Date();
-const updatedAt = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-
-res.json({
-  updatedAt,
-  stationId: currentStation,
-  postId: currentPost,
-  total: ranks.length,
-  ranks
-});
-    
+    res.json({
+      updatedAt: new Date().toLocaleString(),
+      stationId: currentStation,
+      postId: currentPost,
+      total: ranks.length,
+      ranks
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({
