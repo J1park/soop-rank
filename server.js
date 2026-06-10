@@ -67,7 +67,7 @@ app.get("/api/rank", async (req, res) => {
   if (!currentStation || !currentPost) {
     return res.json({
       updatedAt: new Date().toLocaleString(),
-      error: "게시글이 설정되지 않았습니다. 디스코드에서 !설정 명령어로 설정해주세요.",
+      error: "게시글이 설정되지 않았습니다. 디스코드에서 !주소 명령어로 설정해주세요.",
       ranks: []
     });
   }
@@ -130,11 +130,6 @@ if (!DISCORD_TOKEN) {
     console.log(`디스코드 봇 로그인: ${client.user.tag}`);
   });
 
-  // 명령어 접두사 목록
-  const SET_CMDS = ["!setpost", "!설정", "!주소"];
-  const STATUS_CMDS = ["!status", "!현황"];
-  const HELP_CMDS = ["!help", "!도움", "!명령어"];
-
   function getCurrentUrl() {
     if (!currentStation || !currentPost) return null;
     return `https://www.sooplive.com/station/${currentStation}/post/${currentPost}`;
@@ -146,12 +141,10 @@ if (!DISCORD_TOKEN) {
 
     const content = message.content.trim();
 
-    // !설정 / !주소 / !setpost [URL] — URL 없으면 현재 주소 표시
-    const setCmd = SET_CMDS.find(cmd => content.startsWith(cmd));
-    if (setCmd) {
-      const url = content.replace(setCmd, "").trim();
+    // !주소 [URL] 또는 !주소 (URL 없이)
+    if (content.startsWith("!주소")) {
+      const url = content.replace("!주소", "").trim();
 
-      // URL 없으면 현재 주소 표시
       if (!url) {
         const current = getCurrentUrl();
         if (!current) return message.reply("현재 설정된 게시글이 없습니다.");
@@ -161,7 +154,7 @@ if (!DISCORD_TOKEN) {
       const parsed = parseSoopUrl(url);
       if (!parsed) {
         return message.reply(
-          "❌ SOOP 게시글 URL 형식이 아닙니다.\n예: `!설정 https://www.sooplive.com/station/아이디/post/글번호`"
+          "❌ SOOP 게시글 URL 형식이 아닙니다.\n예: `!주소 https://www.sooplive.com/station/아이디/post/글번호`"
         );
       }
 
@@ -170,27 +163,17 @@ if (!DISCORD_TOKEN) {
       console.log(`게시글 변경: station=${currentStation}, post=${currentPost}`);
 
       return message.reply(
-        `✅ 게시글이 설정되었습니다.\n- 채널: \`${currentStation}\`\n- 글번호: \`${currentPost}\`\n- URL: ${getCurrentUrl()}`
+        `✅ 게시글이 설정되었습니다.\n- URL: ${getCurrentUrl()}`
       );
     }
 
-    // !현황 / !status
-    if (STATUS_CMDS.includes(content)) {
-      const current = getCurrentUrl();
-      if (!current) return message.reply("현재 설정된 게시글이 없습니다.");
-      return message.reply(
-        `현재 설정:\n- 채널: \`${currentStation}\`\n- 글번호: \`${currentPost}\`\n- URL: ${current}`
-      );
-    }
-
-    // !도움 / !명령어 / !help
-    if (HELP_CMDS.includes(content)) {
+    // !도움 / !명령어
+    if (content === "!도움" || content === "!명령어") {
       return message.reply(
         "**순위봇 명령어**\n" +
-        "`!설정 [URL]` / `!주소 [URL]` / `!setpost [URL]` - 게시글 설정\n" +
-        "`!설정` / `!주소` (URL 없이) - 현재 주소 확인\n" +
-        "`!현황` / `!status` - 현재 설정 상세 확인\n" +
-        "`!도움` / `!명령어` / `!help` - 명령어 목록"
+        "`!주소 [URL]` - 게시글 설정\n" +
+        "`!주소` (URL 없이) - 현재 주소 확인\n" +
+        "`!도움` / `!명령어` - 명령어 목록"
       );
     }
   });
