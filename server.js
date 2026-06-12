@@ -22,7 +22,7 @@ const MEMBERS = [
   "mingkymya",
   "pqf1234",
   "yaya1787",
-  "hwyjump"
+  "hwyjump",
   "neez0611"
 ];
 
