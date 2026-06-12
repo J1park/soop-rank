@@ -23,6 +23,7 @@ const MEMBERS = [
   "pqf1234",
   "yaya1787",
   "hwyjump"
+  "neez0611"
 ];
 
 function parseSoopUrl(url) {
