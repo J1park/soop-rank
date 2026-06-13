@@ -26,6 +26,16 @@ const MEMBERS = [
   "neez0611"
 ];
 
+// 찐드기 멤버 목록 (여기에 아이디 추가, 또는 !찐드기 추가 명령어 사용)
+let JJINMEMBERS = [
+  "banta251201",
+  "cjdtkddkfl45",
+  "wo0o0ow",
+  "esoj001",
+  "tamazu",
+  "kanoz0"
+];
+
 function parseSoopUrl(url) {
   if (!url) return null;
   url = url.trim();
@@ -91,7 +101,13 @@ app.get("/api/rank", async (req, res) => {
       !top1000.find(t => t.userId === c.userId)
     );
 
-    const merged = [...top1000, ...memberComments];
+    const jjinMemberComments = allSorted.filter(c =>
+      JJINMEMBERS.includes(c.userId || "") &&
+      !top1000.find(t => t.userId === c.userId) &&
+      !memberComments.find(t => t.userId === c.userId)
+    );
+
+    const merged = [...top1000, ...memberComments, ...jjinMemberComments];
 
     const ranks = merged.map(c => ({
       rank: rankMap[c.userId] || 0,
@@ -99,6 +115,7 @@ app.get("/api/rank", async (req, res) => {
       id: c.userId || "",
       up: c.likeCnt || 0,
       member: MEMBERS.includes(c.userId || ""),
+      jjinmember: JJINMEMBERS.includes(c.userId || ""),
       // cutoff 기준으로 above(컷 이상) / below(컷 미만) 구분
       // cutoffRank가 0이면 항상 "none"
       cutoff: cutoffRank > 0
@@ -218,6 +235,41 @@ if (!DISCORD_TOKEN) {
       return message.reply(`✅ 순위 컷이 **${cutoffRank}위**로 설정되었습니다.\n${cutoffRank}위 이상은 초록, 이하는 빨강으로 표시됩니다.`);
     }
 
+    // !찐드기 명령어
+    if (content.startsWith("!찐드기")) {
+      const arg = content.replace("!찐드기", "").trim();
+
+      if (!arg || arg === "목록") {
+        if (JJINMEMBERS.length === 0) return message.reply("현재 찐드기 멤버가 없습니다.");
+        return message.reply(`**찐드기 멤버 목록 (${JJINMEMBERS.length}명)**\n` + JJINMEMBERS.join(", "));
+      }
+
+      if (arg.startsWith("추가 ")) {
+        const id = arg.replace("추가 ", "").trim();
+        if (!id) return message.reply("❌ 추가할 아이디를 입력해주세요.\n예: `!찐드기 추가 userid`");
+        if (JJINMEMBERS.includes(id)) return message.reply(`⚠️ \`${id}\`는 이미 찐드기 멤버입니다.`);
+        JJINMEMBERS.push(id);
+        console.log(`찐드기 추가: ${id}`);
+        return message.reply(`✅ \`${id}\`를 찐드기 멤버로 추가했습니다. (현재 ${JJINMEMBERS.length}명)`);
+      }
+
+      if (arg.startsWith("제거 ")) {
+        const id = arg.replace("제거 ", "").trim();
+        const idx = JJINMEMBERS.indexOf(id);
+        if (idx === -1) return message.reply(`❌ \`${id}\`는 찐드기 멤버 목록에 없습니다.`);
+        JJINMEMBERS.splice(idx, 1);
+        console.log(`찐드기 제거: ${id}`);
+        return message.reply(`✅ \`${id}\`를 찐드기 멤버에서 제거했습니다. (현재 ${JJINMEMBERS.length}명)`);
+      }
+
+      return message.reply(
+        "**찐드기 명령어**\n" +
+        "`!찐드기 목록` - 멤버 확인\n" +
+        "`!찐드기 추가 [아이디]` - 멤버 추가\n" +
+        "`!찐드기 제거 [아이디]` - 멤버 제거"
+      );
+    }
+
     // !도움 / !명령어
     if (content === "!도움" || content === "!명령어") {
       return message.reply(
@@ -227,6 +279,9 @@ if (!DISCORD_TOKEN) {
         "`!컷 [순위]` - 순위 컷 설정 (예: `!컷 30`)\n" +
         "`!컷` (숫자 없이) - 현재 컷 확인\n" +
         "`!컷 해제` - 순위 컷 제거\n" +
+        "`!찐드기 추가 [아이디]` - 찐드기 멤버 추가\n" +
+        "`!찐드기 제거 [아이디]` - 찐드기 멤버 제거\n" +
+        "`!찐드기 목록` - 찐드기 멤버 확인\n" +
         "`!도움` / `!명령어` - 명령어 목록"
       );
     }
