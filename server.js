@@ -33,7 +33,8 @@ let JJINMEMBERS = [
   "wo0o0ow",
   "esoj001",
   "tamazu",
-  "kanoz0"
+  "kanoz0",
+  "dbdnjfdl0216"
 ];
 
 function parseSoopUrl(url) {
