@@ -33,8 +33,7 @@ let JJINMEMBERS = [
   "wo0o0ow",
   "esoj001",
   "tamazu",
-  "kanoz0",
-  "dbdnjfdl0216"
+  "kanoz0"
 ];
 
 function parseSoopUrl(url) {
@@ -117,6 +116,7 @@ app.get("/api/rank", async (req, res) => {
       up: c.likeCnt || 0,
       member: MEMBERS.includes(c.userId || ""),
       jjinmember: JJINMEMBERS.includes(c.userId || ""),
+      jintaverse: MEMBERS.includes(c.userId || "") || JJINMEMBERS.includes(c.userId || ""),
       // cutoff 기준으로 above(컷 이상) / below(컷 미만) 구분
       // cutoffRank가 0이면 항상 "none"
       cutoff: cutoffRank > 0
@@ -178,11 +178,7 @@ if (!DISCORD_TOKEN) {
 
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
-    if (!ADMIN_DISCORD_ID) {
-      return message.reply("❌ ADMIN_DISCORD_ID가 설정되지 않아 명령어를 사용할 수 없습니다.");
-    }
-
-  if (message.author.id !== ADMIN_DISCORD_ID) return;
+    if (ADMIN_DISCORD_ID && message.author.id !== ADMIN_DISCORD_ID) return;
 
     const content = message.content.trim();
 
