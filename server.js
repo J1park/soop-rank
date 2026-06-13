@@ -27,7 +27,15 @@ const MEMBERS = [
 ];
 
 // 찐드기 멤버 목록 (여기에 아이디 추가, 또는 !찐드기 추가 명령어 사용)
-let JJINMEMBERS = ["banta251201","cjdtkddkfl45","wo0o0ow","esoj001","tamazu","kanoz0"];
+let JJINMEMBERS = [
+  "banta251201",
+  "cjdtkddkfl45",
+  "wo0o0ow",
+  "esoj001",
+  "tamazu",
+  "kanoz0",
+  "dbdnjfdl0216"
+];
 
 function parseSoopUrl(url) {
   if (!url) return null;
