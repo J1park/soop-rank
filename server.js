@@ -170,7 +170,11 @@ if (!DISCORD_TOKEN) {
 
   client.on(Events.MessageCreate, async (message) => {
     if (message.author.bot) return;
-    if (ADMIN_DISCORD_ID && message.author.id !== ADMIN_DISCORD_ID) return;
+    if (!ADMIN_DISCORD_ID) {
+      return message.reply("❌ ADMIN_DISCORD_ID가 설정되지 않아 명령어를 사용할 수 없습니다.");
+    }
+
+  if (message.author.id !== ADMIN_DISCORD_ID) return;
 
     const content = message.content.trim();
 
